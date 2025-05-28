@@ -1,0 +1,124 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install go-bindata
+      run: go install github.com/go-bindata/go-bindata/v3/go-bindata@latest
+    
+    - name: Generate embedded assets
+      run: go-bindata -o internal/util/access.go -pkg util static/... templates/...
+    
+    - name: Run tests
+      run: go test -v ./...
+    
+    - name: Build for current platform
+      run: go build -v ./cmd/main.go
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    
+    strategy:
+      matrix:
+        include:
+          - goos: windows
+            goarch: amd64
+            suffix: .exe
+          - goos: windows
+            goarch: arm64
+            suffix: .exe
+          - goos: linux
+            goarch: amd64
+            suffix: ""
+          - goos: linux
+            goarch: arm64
+            suffix: ""
+          - goos: darwin
+            goarch: amd64
+            suffix: ""
+          - goos: darwin
+            goarch: arm64
+            suffix: ""
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Install go-bindata
+      run: go install github.com/go-bindata/go-bindata/v3/go-bindata@latest
+    
+    - name: Generate embedded assets
+      run: go-bindata -o internal/util/access.go -pkg util static/... templates/...
+    
+    - name: Build binary
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+      run: |
+        mkdir -p dist
+        go build -ldflags "-s -w" -o dist/jetbra-free-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }} cmd/main.go
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jetbra-free-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: dist/jetbra-free-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: dist
+    
+    - name: Prepare release assets
+      run: |
+        cd dist
+        for dir in */; do
+          cd "$dir"
+          if [[ -f *.exe ]]; then
+            zip "../${dir%/}.zip" *
+          else
+            tar -czf "../${dir%/}.tar.gz" *
+          fi
+          cd ..
+        done
+        ls -la
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*.{zip,tar.gz}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
