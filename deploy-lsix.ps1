@@ -24,7 +24,10 @@ param(
     [string]$OutputDir = "./bin",
     
     [Parameter(HelpMessage="Enable verbose output")]
-    [switch]$Verbose
+    [switch]$Verbose,
+    
+    [Parameter(HelpMessage="Show help message")]
+    [switch]$Help
 )
 
 # Set error handling
@@ -454,11 +457,10 @@ function Main {
 }
 
 # ============================================================================
-# Script Entry Point
+# Help Function
 # ============================================================================
 
-# Show help if requested
-if ($args -contains "-h" -or $args -contains "-Help" -or $args -contains "/?") {
+function Show-Help {
     Write-Host @"
 lsix Deployment Script
 
@@ -473,7 +475,7 @@ OPTIONS:
     -Package            Create deployment package
     -OutputDir [string] Output directory for builds (default: ./bin)
     -Verbose            Enable verbose output
-    -h, -Help      Show this help message
+    -Help               Show this help message
 
 EXAMPLES:
     .\deploy-lsix.ps1                           # Build for current platform
@@ -483,6 +485,15 @@ EXAMPLES:
     .\deploy-lsix.ps1 -Target linux -Verbose    # Build Linux with verbose output
 
 "@
+}
+
+# ============================================================================
+# Script Entry Point
+# ============================================================================
+
+# Show help if requested
+if ($Help) {
+    Show-Help
     exit 0
 }
 
