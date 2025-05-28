@@ -458,7 +458,7 @@ function Main {
 # ============================================================================
 
 # Show help if requested
-if ($args -contains "-h" -or $args -contains "-Help" -or $args -contains "/?") {
+if ($args -contains "-h" -or $args -contains "-Help") {
     Write-Host @"
 lsix Deployment Script
 
@@ -473,7 +473,7 @@ OPTIONS:
     -Package            Create deployment package
     -OutputDir [string] Output directory for builds (default: ./bin)
     -Verbose            Enable verbose output
-    -h, -Help      Show this help message
+    -h or -Help      Show this help message
 
 EXAMPLES:
     .\deploy-lsix.ps1                           # Build for current platform
