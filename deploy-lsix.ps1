@@ -234,7 +234,7 @@ function Build-Binary {
         
         $outputPath = Join-Path $OutputDir $OutputName
         
-        Write-Step "Building for $OS/$Arch..."
+        Write-Step "Building for ${OS}/${Arch}..."
         
         $buildArgs = @(
             "build",
@@ -259,7 +259,7 @@ function Build-Binary {
         }
     }
     catch {
-        Write-Error "Failed to build for $OS/$Arch: $_"
+        Write-Error "Failed to build for ${OS}/${Arch}: $($_.Exception.Message)"
         throw
     }
     finally {
@@ -466,12 +466,12 @@ USAGE:
     .\deploy-lsix.ps1 [OPTIONS]
 
 OPTIONS:
-    -Target <string>     Build target: 'local', 'all', 'windows', 'linux', 'darwin' (default: local)
+    -Target [string]     Build target: 'local', 'all', 'windows', 'linux', 'darwin' (default: local)
     -Clean              Clean build directory before building
     -SkipDeps           Skip dependency checks
     -Run                Run the application after building (local only)
     -Package            Create deployment package
-    -OutputDir <string> Output directory for builds (default: ./bin)
+    -OutputDir [string] Output directory for builds (default: ./bin)
     -Verbose            Enable verbose output
     -h, --help, /?      Show this help message
 
@@ -488,4 +488,3 @@ EXAMPLES:
 
 # Run main function
 Main
-
